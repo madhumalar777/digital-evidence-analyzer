@@ -1,0 +1,156 @@
+/* Simple dark "cybersecurity" theme, as mentioned in the base paper */
+
+body {
+    background-color: #0d1117;
+    color: #c9d1d9;
+    font-family: 'Consolas', 'Courier New', monospace;
+    display: flex;
+    justify-content: center;
+    padding-top: 60px;
+}
+
+.container {
+    width: 500px;
+    text-align: center;
+}
+
+h1 {
+    color: #58a6ff;
+}
+
+.subtitle {
+    color: #8b949e;
+    margin-bottom: 30px;
+}
+
+.upload-box {
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 30px;
+}
+
+button {
+    background-color: #238636;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin-top: 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+button:hover {
+    background-color: #2ea043;
+}
+
+.result-box {
+    margin-top: 20px;
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: left;
+    word-break: break-word;
+    font-size: 13px;
+}
+
+.section {
+    margin-bottom: 24px;
+}
+
+.section:last-child {
+    margin-bottom: 0;
+}
+
+.section h3 {
+    color: #58a6ff;
+    font-size: 14px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #30363d;
+    padding-bottom: 6px;
+}
+
+.info-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.info-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid #21262d;
+    vertical-align: top;
+}
+
+.info-table td:first-child {
+    color: #8b949e;
+    width: 40%;
+    white-space: nowrap;
+}
+
+.info-table td:last-child {
+    color: #c9d1d9;
+}
+
+.hash-value {
+    font-family: 'Consolas', monospace;
+    font-size: 11px;
+    word-break: break-all;
+}
+
+.exif-status {
+    color: #8b949e;
+    font-style: italic;
+    margin-bottom: 8px;
+}
+
+.gps-box {
+    margin-top: 12px;
+    background-color: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.maps-link {
+    color: #58a6ff;
+    text-decoration: none;
+    font-size: 12px;
+}
+
+.maps-link:hover {
+    text-decoration: underline;
+}
+
+.error-text {
+    color: #f85149;
+}
+
+.verdict-clean {
+    color: #3fb950;
+}
+
+.verdict-suspicious {
+    color: #f85149;
+}
+
+.report-download {
+    text-align: center;
+    border: none !important;
+}
+
+.download-btn {
+    display: inline-block;
+    background-color: #1f6feb;
+    color: white;
+    text-decoration: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.download-btn:hover {
+    background-color: #388bfd;
+}

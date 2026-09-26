@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Digital Evidence Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Digital Evidence Analyzer</h1>
+        <p class="subtitle">Upload a file to begin forensic analysis</p>
+
+        <div class="upload-box">
+            <input type="file" id="fileInput">
+            <button id="uploadBtn">Upload &amp; Analyze</button>
+        </div>
+
+        <div id="resultBox" class="result-box" style="display:none;"></div>
+    </div>
+
+    <script>
+        // BEGINNER NOTE:
+        // This script runs in the browser (not on the server).
+        // It listens for the button click, grabs the selected file,
+        // and sends it to our Flask /analyze route using fetch().
+
+        const uploadBtn = document.getElementById("uploadBtn");
+        const fileInput = document.getElementById("fileInput");
+        const resultBox = document.getElementById("resultBox");
+
+        uploadBtn.addEventListener("click", async () => {
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert("Please choose a file first.");
+                return;
+            }
+
+            // FormData lets us send a file over HTTP like a web form would
+            const formData = new FormData();
+            formData.append("file", file);
+
+            resultBox.style.display = "block";
+            resultBox.textContent = "Uploading and analyzing...";
+
+            try {
+                const response = await fetch("/analyze", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    resultBox.innerHTML = `<p class="error-text">Error: ${data.error}</p>`;
+                } else {
+                    resultBox.innerHTML = buildDashboard(data);
+                }
+            } catch (err) {
+                resultBox.innerHTML = `<p class="error-text">Something went wrong: ${err}</p>`;
+            }
+        });
+
+        // BEGINNER NOTE:
+        // This function takes the JSON response from Flask and builds
+        // readable HTML sections instead of showing raw JSON text.
+        function buildDashboard(data) {
+            let html = "";
+
+            // --- Section 1: File Summary ---
+            html += `
+                <div class="section">
+                    <h3>📄 File Summary</h3>
+                    <table class="info-table">
+                        <tr><td>Original filename</td><td>${escapeHtml(data.original_filename)}</td></tr>
+                        <tr><td>Saved as (UUID)</td><td>${escapeHtml(data.saved_as)}</td></tr>
+                        <tr><td>Size</td><td>${formatBytes(data.size_bytes)}</td></tr>
+                        <tr><td>Detected true type</td><td>${escapeHtml(data.true_mime_type)}</td></tr>
+                    </table>
+                </div>
+            `;
+
+            // --- Section 2: File Integrity (Hashes) ---
+            html += `
+                <div class="section">
+                    <h3>🔒 File Integrity (Hashes)</h3>
+                    <table class="info-table">
+                        <tr><td>MD5</td><td class="hash-value">${escapeHtml(data.md5)}</td></tr>
+                        <tr><td>SHA256</td><td class="hash-value">${escapeHtml(data.sha256)}</td></tr>
+                    </table>
+                </div>
+            `;
+
+            // --- Section 3: Metadata (if present) ---
+            if (data.metadata) {
+                const meta = data.metadata;
+                html += `<div class="section"><h3>🧾 Metadata</h3>`;
+
+                if (meta.exif_status) {
+                    html += `<p class="exif-status">${escapeHtml(meta.exif_status)}</p>`;
+                }
+
+                if (meta.note) {
+                    html += `<p class="exif-status">${escapeHtml(meta.note)}</p>`;
+                }
+
+                // EXIF tags table (camera make/model, date, software, etc.)
+                if (meta.exif_tags && Object.keys(meta.exif_tags).length > 0) {
+                    html += `<table class="info-table">`;
+                    for (const [key, value] of Object.entries(meta.exif_tags)) {
+                        html += `<tr><td>${escapeHtml(key)}</td><td>${escapeHtml(value)}</td></tr>`;
+                    }
+                    html += `</table>`;
+                }
+
+                // GPS coordinates, with a clickable Google Maps link
+                if (meta.gps_coordinates) {
+                    const lat = meta.gps_coordinates.latitude;
+                    const lon = meta.gps_coordinates.longitude;
+                    const mapsUrl = `https://www.google.com/maps?q=${lat},${lon}`;
+                    html += `
+                        <div class="gps-box">
+                            <strong>📍 GPS Location found:</strong> ${lat.toFixed(6)}, ${lon.toFixed(6)}
+                            <br>
+                            <a href="${mapsUrl}" target="_blank" class="maps-link">View on Google Maps →</a>
+                        </div>
+                    `;
+                }
+
+                html += `</div>`;
+            }
+
+            // --- Section 4: Steganography Detection (if applicable) ---
+            if (data.steganography) {
+                const steg = data.steganography;
+                html += `<div class="section"><h3>🕵️ Steganography Detection</h3>`;
+
+                if (steg.error) {
+                    html += `<p class="exif-status">${escapeHtml(steg.error)}</p>`;
+                } else {
+                    const verdictClass = steg.lsb_analysis.suspicious ? "verdict-suspicious" : "verdict-clean";
+                    html += `<p class="${verdictClass}"><strong>${escapeHtml(steg.verdict)}</strong></p>`;
+
+                    html += `<table class="info-table">
+                        <tr><td>LSB zero-bits</td><td>${steg.lsb_analysis.zero_bits.toLocaleString()}</td></tr>
+                        <tr><td>LSB one-bits</td><td>${steg.lsb_analysis.one_bits.toLocaleString()}</td></tr>
+                        <tr><td>Chi-square value</td><td>${steg.lsb_analysis.chi_square_value}</td></tr>
+                        <tr><td>Detection threshold</td><td>${steg.lsb_analysis.threshold}</td></tr>
+                    </table>`;
+
+                    html += `<p class="exif-status" style="margin-top:10px;">${escapeHtml(steg.file_size_analysis.note)}</p>`;
+                    html += `<table class="info-table">
+                        <tr><td>Expected size (uncompressed)</td><td>${formatBytes(steg.file_size_analysis.expected_uncompressed_bytes)}</td></tr>
+                        <tr><td>Actual file size</td><td>${formatBytes(steg.file_size_analysis.actual_bytes)}</td></tr>
+                        <tr><td>Size ratio</td><td>${steg.file_size_analysis.size_ratio}</td></tr>
+                    </table>`;
+                }
+
+                html += `</div>`;
+            }
+
+            // --- Report Download Button ---
+            if (data.report_filename) {
+                html += `
+                    <div class="section report-download">
+                        <a href="/reports/${encodeURIComponent(data.report_filename)}" class="download-btn">
+                            📥 Download Full Forensic PDF Report
+                        </a>
+                    </div>
+                `;
+            }
+
+            return html;
+        }
+
+        function escapeHtml(text) {
+            if (text === undefined || text === null) return "";
+            const div = document.createElement("div");
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatBytes(bytes) {
+            if (bytes < 1024) return bytes + " B";
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+            return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+        }
+    </script>
+</body>
+</html>
