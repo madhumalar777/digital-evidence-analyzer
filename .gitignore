@@ -1,0 +1,23 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Uploaded files (temporary, should never be committed)
+uploads/*
+!uploads/.gitkeep
+
+# Generated PDF reports (these are output, not source code)
+reports/*
+!reports/.gitkeep
+
+# Virtual environment (if you ever create one)
+venv/
+env/
+
+# OS-specific junk files
+.DS_Store
+Thumbs.db
+
+# Editor settings
+.vscode/
+.idea/
